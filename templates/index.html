@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DVD to MP4 Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.1);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+
+        .section h2::before {
+            content: "📀";
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .dvd-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .dvd-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dvd-item:hover {
+            border-color: #4facfe;
+            background: #f0f8ff;
+        }
+
+        .dvd-item.selected {
+            border-color: #4facfe;
+            background: #e6f3ff;
+        }
+
+        .dvd-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .dvd-path {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .refresh-btn {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .file-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .file-input-group input {
+            flex: 1;
+        }
+
+        .browse-btn {
+            width: auto;
+            padding: 12px 20px;
+            white-space: nowrap;
+        }
+
+        .stream-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stream-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stream-item:last-child {
+            border-bottom: none;
+        }
+
+        .stream-details {
+            flex: 1;
+        }
+
+        .stream-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stream-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .language-tag {
+            background: #4facfe;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            margin-left: 10px;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .analyze-btn:hover {
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .file-input-group {
+                flex-direction: column;
+            }
+            
+            .browse-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 DVD to MP4 Converter</h1>
+            <p>Convert your DVDs to high-quality MP4 files with real-time progress tracking</p>
+        </div>
+
+        <div class="content">
+            <!-- DVD Detection Section -->
+            <div class="section">
+                <h2>Select DVD Source</h2>
+                
+                <div class="form-group">
+                    <button id="detectBtn" onclick="detectDVDs()">🔍 Detect DVDs</button>
+                    <button class="refresh-btn" onclick="detectDVDs()">🔄 Refresh</button>
+                    <button class="analyze-btn" onclick="analyzeDVD()">🔬 Analyze Selected DVD</button>
+                </div>
+
+                <div id="dvdList" class="dvd-list"></div>
+
+                <div class="form-group">
+                    <label for="manualPath">Or enter DVD path manually:</label>
+                    <div class="file-input-group">
+                        <input type="text" id="manualPath" placeholder="/Volumes/DVD_NAME or /dev/sr0">
+                        <button class="browse-btn" onclick="document.getElementById('folderInput').click()">📁 Browse</button>
+                    </div>
+                    <input type="file" id="folderInput" webkitdirectory style="display: none;" onchange="handleFolderSelect(this)">
+                </div>
+            </div>
+
+            <!-- DVD Analysis Section -->
+            <div class="section" id="dvdAnalysisSection" style="display: none;">
+                <h2>DVD Analysis</h2>
+                
+                <div id="streamInfo">
+                    <div id="audioStreams"></div>
+                    <div id="subtitleStreams"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="audioTrackSelection">Audio Tracks:</label>
+                    <select id="audioTrackSelection">
+                        <option value="all">Include All Audio Tracks</option>
+                        <option value="first">First Audio Track Only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="includeSubtitles" checked>
+                        Include Subtitles
+                    </label>
+                </div>
+            </div>
+
+            <!-- Output Settings Section -->
+            <div class="section">
+                <h2>Output Settings</h2>
+                
+                <div class="form-group">
+                    <label for="outputFilename">Output filename:</label>
+                    <input type="text" id="outputFilename" placeholder="my_movie" value="converted_dvd">
+                </div>
+
+                <div class="form-group">
+                    <label for="outputFormat">Output format:</label>
+                    <select id="outputFormat" onchange="updateFilenameExtension()">
+                        <option value="mp4">MP4 - Ultra compressed (&lt;200MB)</option>
+                        <option value="3gp">3GP - Mobile format (smallest)</option>
+                        <option value="mkv">MKV - High quality</option>
+                        <option value="webm">WebM - Web optimized</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="outputDir">Output directory:</label>
+                    <div class="file-input-group">
+                        <input type="text" id="outputDir" placeholder="/path/to/output/directory" value="">
+                        <button class="browse-btn" onclick="document.getElementById('dirInput').click()">📁 Browse</button>
+                    </div>
+                    <input type="file" id="dirInput" webkitdirectory style="display: none;" onchange="handleDirSelect(this)">
+                </div>
+            </div>
+
+            <!-- Conversion Controls -->
+            <div class="section">
+                <h2>Conversion</h2>
+                
+                <button id="startBtn" onclick="startConversion()">🚀 Start Conversion</button>
+                <button id="cancelBtn" class="btn-secondary" onclick="cancelConversion()" style="display: none;">❌ Cancel</button>
+
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText" class="progress-text">0%</div>
+                </div>
+
+                <div id="statusMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        let selectedDvdPath = '';
+
+        // Set default output directory to current directory
+        document.getElementById('outputDir').value = '/Users/mmorency/cursor/video';
+
+        // Socket.IO event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            socket.emit('request_status');
+        });
+
+        socket.on('conversion_progress', function(data) {
+            updateProgress(data);
+        });
+
+        // Detect available DVDs
+        async function detectDVDs() {
+            const detectBtn = document.getElementById('detectBtn');
+            const dvdList = document.getElementById('dvdList');
+            
+            detectBtn.disabled = true;
+            detectBtn.textContent = '🔍 Detecting...';
+            
+            try {
+                const response = await fetch('/api/detect_dvds');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDVDs(data.dvds);
+                } else {
+                    showStatus('Error detecting DVDs: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                detectBtn.disabled = false;
+                detectBtn.textContent = '🔍 Detect DVDs';
+            }
+        }
+
+        // Display detected DVDs
+        function displayDVDs(dvds) {
+            const dvdList = document.getElementById('dvdList');
+            
+            if (dvds.length === 0) {
+                dvdList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No DVDs detected. Insert a DVD and click "Detect DVDs" or enter the path manually.</p>';
+                return;
+            }
+
+            dvdList.innerHTML = dvds.map(dvd => `
+                <div class="dvd-item" onclick="selectDVD('${dvd.path}', this)">
+                    <div class="dvd-name">${dvd.name}</div>
+                    <div class="dvd-path">${dvd.path} (${dvd.type})</div>
+                </div>
+            `).join('');
+        }
+
+        // Select a DVD
+        function selectDVD(path, element) {
+            // Remove previous selection
+            document.querySelectorAll('.dvd-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Select current item
+            element.classList.add('selected');
+            selectedDvdPath = path;
+            
+            // Clear manual path
+            document.getElementById('manualPath').value = '';
+            
+            // Hide analysis section when selecting new DVD
+            document.getElementById('dvdAnalysisSection').style.display = 'none';
+        }
+
+        // Analyze selected DVD
+        async function analyzeDVD() {
+            const dvdPath = selectedDvdPath || document.getElementById('manualPath').value;
+            
+            if (!dvdPath) {
+                showStatus('Please select a DVD first', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Analyzing DVD streams...', 'info');
+                
+                const response = await fetch('/api/analyze_dvd', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        dvd_path: dvdPath
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDVDAnalysis(data.dvd_info);
+                    showStatus('DVD analysis complete', 'success');
+                } else {
+                    showStatus('Error analyzing DVD: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Display DVD analysis results
+        function displayDVDAnalysis(dvdInfo) {
+            const analysisSection = document.getElementById('dvdAnalysisSection');
+            const audioStreams = document.getElementById('audioStreams');
+            const subtitleStreams = document.getElementById('subtitleStreams');
+            
+            // Show analysis section
+            analysisSection.style.display = 'block';
+            
+            // Display audio streams
+            if (dvdInfo.audio_streams && dvdInfo.audio_streams.length > 0) {
+                audioStreams.innerHTML = `
+                    <div class="stream-info">
+                        <h4>🔊 Audio Tracks (${dvdInfo.audio_streams.length})</h4>
+                        ${dvdInfo.audio_streams.map((stream, index) => `
+                            <div class="stream-item">
+                                <div class="stream-details">
+                                    <div class="stream-title">${stream.title || `Track ${index + 1}`}</div>
+                                    <div class="stream-meta">${stream.codec} • ${stream.channels} channels</div>
+                                </div>
+                                <span class="language-tag">${stream.language.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                audioStreams.innerHTML = '<p>No audio streams found</p>';
+            }
+            
+            // Display subtitle streams
+            if (dvdInfo.subtitle_streams && dvdInfo.subtitle_streams.length > 0) {
+                subtitleStreams.innerHTML = `
+                    <div class="stream-info">
+                        <h4>📝 Subtitle Tracks (${dvdInfo.subtitle_streams.length})</h4>
+                        ${dvdInfo.subtitle_streams.map((stream, index) => `
+                            <div class="stream-item">
+                                <div class="stream-details">
+                                    <div class="stream-title">${stream.title || `Subtitle ${index + 1}`}</div>
+                                    <div class="stream-meta">${stream.codec}</div>
+                                </div>
+                                <span class="language-tag">${stream.language.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                subtitleStreams.innerHTML = '<p>No subtitle streams found</p>';
+            }
+        }
+
+        // Handle folder selection for DVD path
+        function handleFolderSelect(input) {
+            if (input.files.length > 0) {
+                const path = input.files[0].webkitRelativePath.split('/')[0];
+                document.getElementById('manualPath').value = input.files[0].path || path;
+                selectedDvdPath = '';
+                
+                // Clear DVD list selection
+                document.querySelectorAll('.dvd-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+            }
+        }
+
+        // Handle directory selection for output
+        function handleDirSelect(input) {
+            if (input.files.length > 0) {
+                const path = input.files[0].webkitRelativePath.split('/')[0];
+                document.getElementById('outputDir').value = input.files[0].path || path;
+            }
+        }
+
+        // Start conversion
+        // Update filename extension when format changes
+        function updateFilenameExtension() {
+            const format = document.getElementById('outputFormat').value;
+            const filenameInput = document.getElementById('outputFilename');
+            let filename = filenameInput.value;
+            
+            // Remove existing extension
+            filename = filename.replace(/\.(mp4|3gp|mkv|webm)$/i, '');
+            
+            // Add new extension
+            filenameInput.value = filename + '.' + format;
+        }
+
+        async function startConversion() {
+            const dvdPath = selectedDvdPath || document.getElementById('manualPath').value;
+            const outputFilename = document.getElementById('outputFilename').value;
+            const outputDir = document.getElementById('outputDir').value;
+            const outputFormat = document.getElementById('outputFormat').value;
+            const audioTracks = document.getElementById('audioTrackSelection').value;
+            const includeSubtitles = document.getElementById('includeSubtitles').checked;
+
+            if (!dvdPath) {
+                showStatus('Please select a DVD or enter a path', 'error');
+                return;
+            }
+
+            if (!outputFilename) {
+                showStatus('Please enter an output filename', 'error');
+                return;
+            }
+
+            if (!outputDir) {
+                showStatus('Please enter an output directory', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/start_conversion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        dvd_path: dvdPath,
+                        output_filename: outputFilename,
+                        output_dir: outputDir,
+                        output_format: outputFormat,
+                        audio_tracks: audioTracks,
+                        include_subtitles: includeSubtitles
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showConversionUI(true);
+                    showStatus('Conversion started...', 'info');
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Cancel conversion
+        async function cancelConversion() {
+            try {
+                const response = await fetch('/api/cancel_conversion', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showConversionUI(false);
+                    showStatus('Conversion cancelled', 'info');
+                } else {
+                    showStatus('Error cancelling conversion: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Update progress display
+        function updateProgress(data) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            if (data.active) {
+                progressContainer.style.display = 'block';
+                progressFill.style.width = data.progress + '%';
+                progressText.textContent = data.progress + '%';
+                showStatus(data.message, 'info');
+                showConversionUI(true);
+            } else {
+                if (data.status === 'completed') {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '100%';
+                    showStatus(data.message, 'success');
+                    showConversionUI(false);
+                } else if (data.status === 'error') {
+                    showStatus(data.message, 'error');
+                    showConversionUI(false);
+                } else if (data.status === 'cancelled') {
+                    showStatus(data.message, 'info');
+                    showConversionUI(false);
+                }
+            }
+        }
+
+        // Show/hide conversion UI elements
+        function showConversionUI(active) {
+            const startBtn = document.getElementById('startBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const progressContainer = document.getElementById('progressContainer');
+
+            if (active) {
+                startBtn.style.display = 'none';
+                cancelBtn.style.display = 'block';
+                progressContainer.style.display = 'block';
+            } else {
+                startBtn.style.display = 'block';
+                cancelBtn.style.display = 'none';
+                if (!active) {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = 'status-message status-' + type;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+        }
+
+        // Auto-detect DVDs on page load
+        window.onload = function() {
+            detectDVDs();
+        };
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFilenameExtension(); // Set initial extension
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+file '/Volumes/Logical label/VIDEO_TS/VTS_01_1.VOB'
+file '/Volumes/Logical label/VIDEO_TS/VTS_01_2.VOB'
+file '/Volumes/Logical label/VIDEO_TS/VTS_01_3.VOB'
