@@ -1,11 +1,4 @@
-# Python packages for command-line script
-# No additional packages required - uses built-in libraries
-
-# Python packages for web interface
 Flask==2.3.3
 Flask-SocketIO==5.3.6
 python-socketio==5.8.0
-python-engineio==4.7.1
-
-# External dependencies (must be installed separately):
-# - ffmpeg (for video conversion)
+eventlet==0.33.3

@@ -2,6 +2,9 @@
 
 A comprehensive, professional-grade DVD conversion suite with both command-line and web interfaces. Convert DVDs to multiple formats with advanced compression, multi-language support, and real-time progress tracking.
 
+## 🔥 **Latest Update - Fixed VOB Processing**
+**Problem Solved**: Fixed DVD conversion to properly handle all VOB files and achieve full 34+ minute conversions. The new method converts each VOB file individually then concatenates the MP4 results, ensuring no content is lost.
+
 ## ✨ Features
 
 ### 🌐 **Web Interface**
