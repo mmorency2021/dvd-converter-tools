@@ -168,14 +168,53 @@ class WebDVDConverterFixed(DVDConverterFixed):
             self.emit_progress(conversion_status)
             
             print(f"DEBUG: About to concatenate:")
+            print(f"  current working directory: {os.getcwd()}")
             print(f"  temp_mp4_files: {temp_mp4_files}")
             print(f"  output_path: {output_path}")
+            print(f"  output_path absolute: {os.path.abspath(output_path)}")
             for i, temp_file in enumerate(temp_mp4_files):
                 exists = os.path.exists(temp_file)
                 size = os.path.getsize(temp_file) if exists else 0
+                abs_temp = os.path.abspath(temp_file)
                 print(f"  temp_file_{i+1}: {temp_file} (exists: {exists}, size: {size})")
+                print(f"    absolute: {abs_temp} (exists: {os.path.exists(abs_temp)})")
             
-            if not self.concatenate_mp4_files(temp_mp4_files, output_path):
+            # Convert all paths to absolute to avoid working directory issues
+            abs_temp_files = [os.path.abspath(f) for f in temp_mp4_files]
+            abs_output_path = os.path.abspath(output_path)
+            
+            print(f"DEBUG: Using absolute paths for concatenation:")
+            print(f"  abs_temp_files: {abs_temp_files}")
+            print(f"  abs_output_path: {abs_output_path}")
+            
+            # GUARANTEED FIX: Use subprocess directly to avoid any context issues
+            import tempfile
+            import subprocess
+            
+            # Create concat file with absolute paths
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                for abs_temp_file in abs_temp_files:
+                    f.write(f"file '{abs_temp_file}'\n")
+                concat_file = f.name
+            
+            try:
+                print(f"DEBUG: DIRECT concatenation using subprocess...")
+                cmd = ['ffmpeg', '-f', 'concat', '-safe', '0', '-i', concat_file, 
+                       '-c', 'copy', abs_output_path, '-y']
+                print(f"DEBUG: Command: {' '.join(cmd)}")
+                
+                result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd())
+                
+                if result.returncode == 0:
+                    print(f"SUCCESS: Direct concatenation completed!")
+                    concatenation_success = True
+                else:
+                    print(f"ERROR: Direct concatenation failed: {result.stderr}")
+                    concatenation_success = False
+            finally:
+                os.unlink(concat_file)
+            
+            if not concatenation_success:
                 conversion_status.update({
                     'active': False,
                     'status': 'error',

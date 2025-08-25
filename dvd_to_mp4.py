@@ -46,6 +46,14 @@ class DVDConverterFixed:
     
     def concatenate_mp4_files(self, mp4_files, output_file):
         """Concatenate multiple MP4 files"""
+        # Ensure output directory exists
+        output_dir = os.path.dirname(os.path.abspath(output_file))
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Convert output_file to absolute path
+        output_file = os.path.abspath(output_file)
+        
         # Create temporary concat file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             for mp4_file in mp4_files:
