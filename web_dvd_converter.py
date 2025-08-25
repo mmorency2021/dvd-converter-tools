@@ -96,6 +96,14 @@ class WebDVDConverterFixed(DVDConverterFixed):
         output_filename = f"{base_name}.{output_format}"
         output_path = os.path.join(output_dir, output_filename)
         
+        print(f"DEBUG: Web converter paths:")
+        print(f"  output_dir: '{output_dir}'")
+        print(f"  output_filename: '{output_filename}'")
+        print(f"  output_path: '{output_path}'")
+        print(f"  absolute output_path: '{os.path.abspath(output_path)}'")
+        print(f"  output_dir exists: {os.path.exists(output_dir)}")
+        print(f"  output_dir writable: {os.access(output_dir, os.W_OK)}")
+        
         # Update status
         conversion_status.update({
             'active': True,
@@ -158,6 +166,14 @@ class WebDVDConverterFixed(DVDConverterFixed):
                 'message': 'Combining converted files...'
             })
             self.emit_progress(conversion_status)
+            
+            print(f"DEBUG: About to concatenate:")
+            print(f"  temp_mp4_files: {temp_mp4_files}")
+            print(f"  output_path: {output_path}")
+            for i, temp_file in enumerate(temp_mp4_files):
+                exists = os.path.exists(temp_file)
+                size = os.path.getsize(temp_file) if exists else 0
+                print(f"  temp_file_{i+1}: {temp_file} (exists: {exists}, size: {size})")
             
             if not self.concatenate_mp4_files(temp_mp4_files, output_path):
                 conversion_status.update({

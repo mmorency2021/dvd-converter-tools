@@ -49,7 +49,8 @@ class DVDConverterFixed:
         # Create temporary concat file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             for mp4_file in mp4_files:
-                f.write(f"file '{mp4_file}'\\n")
+                abs_path = os.path.abspath(mp4_file)
+                f.write(f"file '{abs_path}'\n")
             concat_file = f.name
         
         try:
@@ -57,8 +58,20 @@ class DVDConverterFixed:
                    '-c', 'copy', output_file, '-y']
             
             print("Concatenating MP4 files...")
+            print(f"DEBUG: Concatenation command: {' '.join(cmd)}")
+            print(f"DEBUG: Output file: {output_file}")
+            print(f"DEBUG: Input files: {mp4_files}")
+            
             result = subprocess.run(cmd, capture_output=True, text=True)
-            return result.returncode == 0
+            
+            if result.returncode != 0:
+                print(f"ERROR: Concatenation failed with return code {result.returncode}")
+                print(f"STDERR: {result.stderr}")
+                print(f"STDOUT: {result.stdout}")
+                return False
+            
+            print(f"SUCCESS: Concatenation completed. Output file: {output_file}")
+            return True
         finally:
             os.unlink(concat_file)
     
