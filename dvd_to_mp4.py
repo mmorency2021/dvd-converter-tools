@@ -88,7 +88,7 @@ class DVDConverterFixed:
         if output_format == 'mp4':
             return [
                 '-c:v', 'libx264',
-                '-preset', 'veryslow',
+                '-preset', 'fast',
                 '-crf', '30',
                 '-maxrate', '300k',
                 '-bufsize', '600k',
@@ -102,7 +102,7 @@ class DVDConverterFixed:
         elif output_format == '3gp':
             return [
                 '-c:v', 'libx264',
-                '-preset', 'veryslow',
+                '-preset', 'fast',
                 '-crf', '32',
                 '-maxrate', '200k',
                 '-bufsize', '400k',
