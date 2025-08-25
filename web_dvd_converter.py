@@ -224,10 +224,19 @@ def start_conversion():
         return jsonify({'success': False, 'error': 'Conversion already in progress'})
     
     data = request.get_json()
+    print(f"DEBUG: Received data: {data}")
     dvd_path = data.get('dvdPath')
     output_filename = data.get('outputFilename', 'converted_dvd.mp4')
     output_dir = data.get('outputDirectory', '.')
     output_format = data.get('outputFormat', 'mp4')
+    
+    # Handle paths that include /VIDEO_TS
+    if dvd_path and dvd_path.endswith('/VIDEO_TS'):
+        dvd_path = dvd_path[:-10]  # Remove /VIDEO_TS from the end
+        print(f"DEBUG: Adjusted DVD Path (removed /VIDEO_TS): '{dvd_path}'")
+    
+    print(f"DEBUG: DVD Path: '{dvd_path}'")
+    print(f"DEBUG: Output Filename: '{output_filename}'")
     
     if not dvd_path:
         return jsonify({'success': False, 'error': 'DVD path is required'})
